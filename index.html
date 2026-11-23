@@ -1,1 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Smart Ingredient Meal Planner</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; background: #f8fafc; color: #1e293b; }
+    .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1rem; }
+    nav { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+    button { background: #2563eb; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    button.secondary { background: #e2e8f0; color: #1e293b; }
+    button.danger { background: #ef4444; padding: 0.3rem 0.6rem; font-size: 0.85rem; }
+    input, select { padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px; margin-right: 0.5rem; margin-bottom: 0.5rem; }
+    .hidden { display: none; }
+    .alert { padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; background: #dcfce7; color: #166534; }
+    .error { background: #fee2e2; color: #991b1b; }
+    pre { white-space: pre-wrap; background: #f1f5f9; padding: 1rem; border-radius: 6px; }
+  </style>
+</head>
+<body>
+
+  <!-- AUTH SCREEN -->
+  <div id="auth-view" class="card">
+    <h2>Smart Ingredient Meal Planner</h2>
+    <p>Create an account or log in to manage your food and plan meals.</p>
+    <div id="auth-msg" class="alert hidden"></div>
+    <input type="email" id="email" placeholder="College Email (e.g. alex@edu.com)" required />
+    <input type="password" id="password" placeholder="Password (min 6 chars)" required />
+    <div>
+      <button onclick="handleAuth('register')">Create Account</button>
+      <button class="secondary" onclick="handleAuth('login')">Log In</button>
+    </div>
+  </div>
+
+  <!-- MAIN APPLICATION -->
+  <div id="app-view" class="hidden">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2>Smart Meal Planner</h2>
+      <button class="secondary" onclick="logout()">Log Out</button>
+    </div>
+
+    <nav>
+      <button onclick="showTab('home')">Home</button>
+      <button onclick="showTab('pantry')">My Ingredients</button>
+      <button onclick="showTab('budget')">Budget</button>
+      <button onclick="showTab('planner')">Meal Plan</button>
+    </nav>
+
+    <!-- HOME DISPLAY -->
+    <div id="tab-home" class="card">
+      <h3>Welcome, <span id="user-display"></span>!</h3>
+      <p><strong>Listed Ingredients:</strong> <span id="home-count">0</span> items</p>
+      <p><strong>Remaining Weekly Budget:</strong> $<span id="home-budget">0.00</span></p>
+      <button onclick="showTab('planner')">Generate Meal Plan Now →</button>
+    </div>
+
+    <!-- PANTRY / ADD INGREDIENTS -->
+    <div id="tab-pantry" class="card hidden">
+      <h3>Add & Manage Ingredients</h3>
+      <input type="text" id="ing-name" placeholder="Ingredient (e.g., Eggs)" />
+      <input type="text" id="ing-qty" placeholder="Quantity (e.g., 12)" />
+      <input type="date" id="ing-exp" />
+      <button onclick="addIngredient()">+ Add Item</button>
+      <ul id="pantry-list"></ul>
+    </div>
+
+    <!-- BUDGET STRUCTURE -->
+    <div id="tab-budget" class="card hidden">
+      <h3>Weekly Student Food Budget</h3>
+      <label>Weekly Limit ($): <input type="number" id="budget-limit" step="0.01" /></label>
+      <label>Spent So Far ($): <input type="number" id="budget-spent" step="0.01" /></label>
+      <button onclick="saveBudget()">Save Budget</button>
+      <p><strong>Remaining Balance:</strong> $<span id="budget-remaining">0.00</span></p>
+    </div>
+
+    <!-- SET PLAN FOR LISTED INGREDIENTS -->
+    <div id="tab-planner" class="card hidden">
+      <h3>Create Meal Plan from Listed Ingredients</h3>
+      <label>Plan Length:
+        <select id="plan-days">
+          <option value="3">3 Days</option>
+          <option value="5">5 Days</option>
+          <option value="7">7 Days</option>
+        </select>
+      </label>
+      <input type="text" id="plan-diet" placeholder="Dietary notes (optional)" />
+      <button onclick="generatePlan()">Build Meal Plan</button>
+      <pre id="plan-output">Click "Build Meal Plan" to generate meals from your pantry & budget.</pre>
+    </div>
+  </div>
+
+  <script>
+    async function handleAuth(type) {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const msgBox = document.getElementById('auth-msg');
+
+      const res = await fetch(`/api/auth/${type}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+
+      msgBox.classList.remove('hidden', 'error');
+      if (!res.ok) {
+        msgBox.classList.add('error');
+        msgBox.textContent = Array.isArray(data.detail) ? data.detail[0].msg : data.detail;
+        return;
+      }
+
+      msgBox.textContent = data.message + " Redirecting...";
+      setTimeout(() => {
+        document.getElementById('auth-view').classList.add('hidden');
+        document.getElementById('app-view').classList.remove('hidden');
+        document.getElementById('user-display').textContent = data.email;
+        refreshAll();
+      }, 800);
+    }
+
+    function logout() {
+      document.getElementById('app-view').classList.add('hidden');
+      document.getElementById('auth-view').classList.remove('hidden');
+    }
+
+    function showTab(tab) {
+      ['home', 'pantry', 'budget', 'planner'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.add('hidden');
+      });
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+    }
+
+    async function refreshAll() {
+      const pantry = await (await fetch('/api/pantry')).json();
+      const budget = await (await fetch('/api/budget')).json();
+
+      document.getElementById('home-count').textContent = pantry.length;
+      document.getElementById('home-budget').textContent = budget.remaining.toFixed(2);
+      document.getElementById('budget-limit').value = budget.weekly_limit;
+      document.getElementById('budget-spent').value = budget.spent_so_far;
+      document.getElementById('budget-remaining').textContent = budget.remaining.toFixed(2);
+
+      const list = document.getElementById('pantry-list');
+      list.innerHTML = pantry.map(i => `
+        <li style="margin:0.5rem 0;">
+          <strong>${i.name}</strong> (${i.quantity}) — Exp: ${i.expiration_date || 'None'}
+          <button class="danger" onclick="deleteIngredient(${i.id})">Remove</button>
+        </li>
+      `).join('');
+    }
+
+    async function addIngredient() {
+      const name = document.getElementById('ing-name').value;
+      const quantity = document.getElementById('ing-qty').value;
+      const expiration_date = document.getElementById('ing-exp').value || null;
+      if (!name || !quantity) return;
+
+      await fetch('/api/pantry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: Date.now(), name, quantity, expiration_date })
+      });
+      document.getElementById('ing-name').value = '';
+      document.getElementById('ing-qty').value = '';
+      refreshAll();
+    }
+
+    async function deleteIngredient(id) {
+      await fetch(`/api/pantry/${id}`, { method: 'DELETE' });
+      refreshAll();
+    }
+
+    async function saveBudget() {
+      const weekly_limit = parseFloat(document.getElementById('budget-limit').value) || 0;
+      const spent_so_far = parseFloat(document.getElementById('budget-spent').value) || 0;
+      await fetch('/api/budget', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ weekly_limit, spent_so_far })
+      });
+      refreshAll();
+    }
+
+    async function generatePlan() {
+      const out = document.getElementById('plan-output');
+      out.textContent = "Generating your personalized meal plan...";
+      const days = parseInt(document.getElementById('plan-days').value);
+      const dietary_preferences = document.getElementById('plan-diet').value || "None";
+
+      const res = await fetch('/api/meal-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ days, dietary_preferences })
+      });
+      const data = await res.json();
+      out.textContent = res.ok ? data.plan : data.detail;
+    }
+  </script>
+</body>
+</html>
 
