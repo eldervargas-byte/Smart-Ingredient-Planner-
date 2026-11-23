@@ -27,3 +27,9 @@ A project Smart Food planning app that effectively helps budgeting and reduced f
 - React: Familiar from previous courses
 - MongoDB: Flexible for user data
 - OpenAI / Gemini API: For intelligent task suggestions
+
+smart-meal-planner/
+├── Dockerfile
+├── requirements.txt
+├── main.py          # FastAPI backend (Auth, Pantry, Budget, Meal Plan)
+└── index.html       # UI (Login/Register, Navigation, Home, Budget, Planner)
