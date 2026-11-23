@@ -1,36 +1,84 @@
 # Smart-Ingredient-Planner-
-A Unit Final project for Modern Technology online course. The "Smart" Ingredient Planner is AI driven program that The idea is for interactive, data-driven website application that generates personalized recipes based on ingredient that users already own but doesn't know a use for it. This app will allow to maximize the utility of their current grocery inventory by offering substitution and tracking ingredient freshness to minimize overall food waste. 
 
-## Technology Stack 
-- **Frontend**: React & TypeScript
-- **Backend**: Node.js & Express
-- **AI Integration**: OpenAI / Gemini API (Context-aware substitution engine)
-- **Database**: MongoDB
-- **Deployment**: Docker & Google Cloud
+A Unit Final project for the Modern Technology online course. The **"Smart" Ingredient Planner** is an AI-driven web application that allows users to list the food products they currently own, track expiration dates, manage a weekly grocery budget, and generate personalized meal plans with ingredient substitutions to reduce food waste and avoid overspending.
 
- ## Getting Started
- 1. Clone the repository: `git clone https://github.com/eldervargas-byte/Smart-Ingredient-Planner-.git`
-2. Navigate to the project folder: 'cd Smart-Ingredient-Planner-'
-3. Install dependencies: `npm install`
-4. Set up environment variables: `cp .env.example .env'
-5. Start the app: `npm run dev`
+## Problem & Solution
 
-## App Preview
+* **Problem:** Students struggle to plan meals around what they already have, resulting in wasted groceries and overspending on takeout.
+* **Solution:** A smart food and budget planning app that prioritizes soon-to-expire pantry ingredients and builds cost-conscious meal plans within a user's remaining weekly budget.
 
-## Problem
-Students struggle to plan meals, wasting food products and wasting money by overspending or purchasing takeout food.
+## Current Project Status (Unit 12 MVP)
 
-## Solution
-A project Smart Food planning app that effectively helps budgeting and reduced food waste
+* **Authentication:** Email and password registration and login with input validation and session navigation.
+* **Home Dashboard:** Displays a live summary of total listed ingredients and remaining weekly grocery budget.
+* **Smart Pantry Management:** Users can add, view, and delete ingredients with quantities and expiration dates (automatically sorted so items expiring soonest appear first).
+* **Weekly Budget Structure:** Users can set a weekly grocery limit, log spending, and view their real-time remaining balance.
+* **AI Meal Plan Generator:** Connects to the Gemini API to generate multi-day meal plans maximizing current pantry inventory while respecting dietary notes and remaining budget.
+* **Containerization:** Packaged with Docker for local testing and Google Cloud Run deployment.
 
-## Technology Choices
-- React: Familiar from previous courses
-- MongoDB: Flexible for user data
-- OpenAI / Gemini API: For intelligent task suggestions
+## Technology Stack
 
-## ASCII
-smart-meal-planner/
-├── Dockerfile
-├── requirements.txt
-├── main.py          # FastAPI backend (Auth, Pantry, Budget, Meal Plan)
-└── index.html       # UI (Login/Register, Navigation, Home, Budget, Planner)
+* **Backend:** Python 3.11 & FastAPI
+* **Frontend:** HTML5, CSS3, Vanilla JavaScript (Single-Page UI)
+* **AI Integration:** Google Gemini API (`google-genai` / `gemini-2.5-flash`)
+* **Containerization & Deployment:** Docker & Google Cloud Run
+
+## Project Structure
+
+```text
+Smart-Ingredient-Planner-/
+├── Dockerfile          # Container configuration for Cloud Run
+├── README.md           # Project documentation
+├── index.html          # Frontend UI (Auth, Home, Pantry, Budget, Meal Planner)
+├── main.py             # FastAPI backend & Gemini AI integration
+└── requirements.txt    # Python dependencies
+```
+
+## Getting Started
+
+### Option 1: Run Locally with Python
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com
+   cd Smart-Ingredient-Planner-
+   ```
+
+2. **Create a virtual environment and install dependencies:**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows use: venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+3. **Set your Gemini API key:**
+   ```bash
+   export GEMINI_API_KEY="your_api_key_here"  # On Windows PowerShell: \$env:GEMINI_API_KEY="your_api_key_here"
+   ```
+
+4. **Start the application:**
+   ```bash
+   uvicorn main:app --reload --port 8080
+   ```
+   Open `http://localhost:8080` in your browser.
+
+
+### Option 2: Run with Docker
+
+1. **Build the Docker image:**
+   ```bash
+   docker build -t smart-meal-planner .
+   ```
+
+2. **Run the container:**
+   ```bash
+   docker run -p 8080:8080 -e GEMINI_API_KEY="your_api_key_here" smart-meal-planner
+   ```
+   Open `http://localhost:8080` in your browser (or `http://localhost:8080/docs` to view the interactive API documentation).
+
+
+## AI Tool Usage Documentation
+
+AI tools were used during Sprint 1 development in two ways:
+1. **In-App AI Feature:** Integrated the **Google Gemini API (`gemini-2.5-flash`)** to analyze user pantry inventories, prioritize ingredients nearing expiration, and generate budget-aware meal plans.
+2. **Development Assistance:** Used AI coding assistants to scaffold the FastAPI endpoints, build the responsive single-page frontend (`index.html`), write the `Dockerfile`, and structure Git feature branch workflows. All generated code was reviewed, tested locally, and verified against Sprint 1 user story acceptance criteria.
