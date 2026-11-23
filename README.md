@@ -28,6 +28,7 @@ A project Smart Food planning app that effectively helps budgeting and reduced f
 - MongoDB: Flexible for user data
 - OpenAI / Gemini API: For intelligent task suggestions
 
+## ASCII
 smart-meal-planner/
 ├── Dockerfile
 ├── requirements.txt
